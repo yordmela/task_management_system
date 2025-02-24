@@ -8,8 +8,8 @@ export const createTask = async (req, res) => {
 
     try {
         const { title, description, dueDate, assignedTo, assignedBy, project, team } = req.body;
+        console.log(req.body)
         const userId = req.user.id;
-        const userRole = req.user.role;
 
         if (!Array.isArray(assignedTo) || assignedTo.length === 0) {
             return res.status(400).json({ message: "At least one user must be assigned to the task" });
@@ -31,9 +31,7 @@ export const createTask = async (req, res) => {
         await projectData.save(); // Save updated project with assigned users
 
 
-        if (userRole !== 'admin' && userRole !== 'projectManager') {
-            return res.status(403).json({ message: "Permission denied. You need to be an admin or project manager to create a project." });
-        }
+ 
 
         const newTask = await Task.create({ title, description, dueDate, assignedTo, assignedBy: userId, project, team });
 
@@ -84,18 +82,19 @@ export const getTasksForUser = async (req, res) => {
 export const getTasksForProject = async (req, res) => {
     try {
         const projectId = req.params.id;
-
+       
         // Validate if projectId is a valid ObjectId
         if (!mongoose.Types.ObjectId.isValid(projectId)) {
             return res.status(400).json({ message: "Invalid project ID format" });
         }
-
+  console.log("heere is the mongoes chger")
         const tasks = await Task.find({ project: projectId });
 
         if (!tasks || tasks.length === 0) {
             return res.status(404).json({ message: "No tasks found for this project" });
         }
-
+        console.log("heere is the task length chger")
+        console.log(tasks)
         res.status(200).json({ tasks });
     } catch (error) {
         res.status(500).json({ message: "Server error", error: error.message });

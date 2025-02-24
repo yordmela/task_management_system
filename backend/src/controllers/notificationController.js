@@ -4,7 +4,7 @@ export const getNotifications= async (req,res)=>{
         const userId = req.user.id; // Get user from the request (authenticated user)
 
         // Fetch notifications for the user, sorted by createdAt in descending order
-        const notifications = await Notification.find({ user: userId })
+        const notifications = await Notification.find({ user: userId , read: false})
             .sort({ createdAt: -1 }); // Sort notifications by newest first
 
         if (!notifications) {
@@ -18,27 +18,25 @@ export const getNotifications= async (req,res)=>{
 }
 
 
-export const markNotificationAsRead = async (req, res) => {
+export const markAllNotificationsAsRead = async (req, res) => {
     try {
-        const notificationId = req.params.id;  // Assuming notification ID is passed as a URL parameter
+        console.log("i made it to markAllNotificationsAsRead ")
+        const userId = req.user.id; // Extract user ID from the authenticated token
 
-        // Find the notification by its ID
-        const notification = await Notification.findById(notificationId);
+        // Find all unread notifications for this user
+        const notifications = await Notification.find({ user:userId, read: false });
+        console.log(notifications)
 
-        // If the notification doesn't exist
-        if (!notification) {
-            return res.status(404).json({ message: "Notification not found" });
+        if (notifications.length === 0) {
+            return res.status(200).json({ message: "No unread notifications" });
         }
 
-        // Mark the notification as read
-        notification.read = true;
-        
-        // Save the updated notification
-        await notification.save();
+        // Mark all as read
+        await Notification.updateMany({ user:userId, read: false }, { $set: { read: true } });
 
-        // Respond with the updated notification
-        res.status(200).json({ message: "Notification marked as read", notification });
+        res.status(200).json({ message: "All notifications marked as read" });
     } catch (error) {
         res.status(500).json({ message: "Server error", error: error.message });
     }
 };
+

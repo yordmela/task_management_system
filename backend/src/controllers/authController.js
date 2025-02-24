@@ -8,7 +8,7 @@ dotenv.config(); // Load environment variables
 // Register a new user
 export const registerUser = async (req, res) => {
     try {
-        const { name, email, password, role } = req.body;
+        const { name, email, password } = req.body;
 
         if (!email || !password) {
             return res.status(400).json({ message: "Email and password are required" });
@@ -25,7 +25,7 @@ export const registerUser = async (req, res) => {
         }
         
 
-        const newUser = await User.create({ name, email, password, role });
+        const newUser = await User.create({ name, email, password });
 
 
         res.status(201).json({ message: "User registered successfully", user: newUser });
@@ -52,7 +52,11 @@ export const loginUser = async (req, res) => {
         }
 
         // Generate JWT token
-        const token = jwt.sign({ id: user._id }, process.env.JWT_SECRET, { expiresIn: "1d" });
+        const token = jwt.sign({
+            id: user.id,
+            email: user.email,
+            name: user.name,
+          }, process.env.JWT_SECRET, { expiresIn: "1d" });
 
         res.status(200).json({ message: "Login successful", token });
     } catch (error) {
@@ -72,3 +76,27 @@ export const getUserProfile = async (req, res) => {
         res.status(500).json({ message: "Server error", error: error.message })
     }
 }
+
+export const getUserById = async (req, res) => {
+    try {
+        const id = req.params.id; // Get the user ID from the request params
+        const user = await User.findById(id).select("-password"); // Exclude the password field
+
+        if (!user) {
+            return res.status(404).json({ message: "User not found" });
+        }
+
+        res.status(200).json({
+            message: "User found",
+            user, // Return the user object (without password)
+        });
+    } catch (error) {
+        console.error(error);
+        res.status(500).json({
+            message: "Server error",
+            error: error.message
+        });
+    }
+};
+
+
